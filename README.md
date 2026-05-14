@@ -1,6 +1,6 @@
-# <Project name>
+# Project name
 
-RESTful <Project name> backend API built with ASP.NET Core.
+RESTful <Project_name> backend API built with ASP.NET Core.
 
 ## Features
 
