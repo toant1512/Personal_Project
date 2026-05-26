@@ -2,6 +2,8 @@
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using MediaArchive.Infrastructure.Persistence;
+using MediaArchive.Application.Authentication.Interfaces;
+using MediaArchive.Infrastructure.Services;
 
 namespace MediaArchive.Infrastructure;
 
@@ -15,6 +17,8 @@ public static class DependencyInjection
             options.UseNpgsql(
                 configuration.GetConnectionString("DefaultConnection")
             ));
+
+        services.AddScoped<IAuthService, AuthService>();
 
         return services;
     }
