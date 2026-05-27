@@ -10,10 +10,13 @@ namespace MediaArchive.Infrastructure.Services;
 public class AuthService : IAuthService
 {
     private readonly ApplicationDbContext _context;
-
-    public AuthService(ApplicationDbContext context)
+    private readonly IJwtService _jwtService;
+    public AuthService(
+        ApplicationDbContext context,
+        IJwtService jwtService)
     {
         _context = context;
+        _jwtService = jwtService;
     }
 
     public async Task RegisterAsync(RegisterRequest request)
@@ -68,6 +71,6 @@ public class AuthService : IAuthService
                 "Invalid credentials");
         }
 
-        return "Login successful";
+        return _jwtService.GenerateToken(user);
     }
 }
