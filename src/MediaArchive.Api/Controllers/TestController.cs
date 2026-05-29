@@ -11,7 +11,6 @@ public class TestController : ControllerBase
     [HttpGet]
     public IActionResult Get()
     {
-        return Ok(
-            "Protected route accessed");
+        return Ok("Protected route accessed");
     }
 }
