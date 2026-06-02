@@ -1,8 +1,9 @@
-﻿using System.Security.Claims;
+﻿using MediaArchive.Application.Interfaces;
 using MediaArchive.Application.Media.DTOs;
 using MediaArchive.Application.Media.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System.Security.Claims;
 
 namespace MediaArchive.Api.Controllers;
 
@@ -12,10 +13,12 @@ namespace MediaArchive.Api.Controllers;
 public class MediaController : ControllerBase
 {
     private readonly IMediaService _mediaService;
+    private readonly IDownloadService _downloadService;
 
-    public MediaController(IMediaService mediaService)
+    public MediaController(IMediaService mediaService, IDownloadService downloadService)
     {
         _mediaService = mediaService;
+        _downloadService = downloadService;
     }
 
     [HttpPost]
@@ -46,6 +49,14 @@ public class MediaController : ControllerBase
         await _mediaService.DeleteAsync(id, userId);
 
         return Ok("Media deleted");
+    }
+
+    [HttpPost("download/{id}")]
+    public async Task<IActionResult> Download(Guid id)
+    {
+        await _downloadService.DownloadAudioAsync(id);
+
+        return Ok("Download completed");
     }
 
     private Guid GetUserId()

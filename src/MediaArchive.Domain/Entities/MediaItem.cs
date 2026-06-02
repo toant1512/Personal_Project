@@ -21,4 +21,6 @@ public class MediaItem
     public int DurationSeconds { get; set; }
 
     public DateTime CreatedAt { get; set; }
+
+    public string Status { get; set; } = "Pending";  // Pending, Downloading, Completed, Failed
 }
