@@ -1,7 +1,8 @@
-﻿using System.Diagnostics;
-using MediaArchive.Application.Interfaces;
+﻿using MediaArchive.Application.Interfaces;
+using MediaArchive.Domain.Enums;
 using MediaArchive.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
+using System.Diagnostics;
 
 namespace MediaArchive.Infrastructure.Services;
 
@@ -26,7 +27,7 @@ public class DownloadService : IDownloadService
 
         try
         {
-            media.Status = "Downloading";
+            media.Status = DownloadStatus.Downloading;
 
             await _context.SaveChangesAsync();
 
@@ -62,13 +63,13 @@ public class DownloadService : IDownloadService
 
             media.FilePath = outputPath;
 
-            media.Status = "Completed";
+            media.Status = DownloadStatus.Completed;
 
             await _context.SaveChangesAsync();
         }
         catch
         {
-            media.Status = "Failed";
+            media.Status = DownloadStatus.Failed;
 
             await _context.SaveChangesAsync();
 

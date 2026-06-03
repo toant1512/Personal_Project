@@ -21,6 +21,7 @@ public static class DependencyInjection
         services.AddScoped<IJwtService, JwtService>();
         services.AddScoped<IMediaService, MediaService>();
         services.AddScoped<IDownloadService, DownloadService>();
+        services.AddSingleton<IDownloadQueue, DownloadQueue>();
 
         return services;
     }

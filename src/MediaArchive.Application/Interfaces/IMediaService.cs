@@ -9,4 +9,6 @@ public interface IMediaService
     Task<List<MediaResponse>> GetAllAsync(Guid userId);
 
     Task DeleteAsync(Guid mediaId, Guid userId);
+
+    Task QueueDownloadAsync(Guid mediaId);
 }

@@ -12,8 +12,8 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace MediaArchive.Infrastructure.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20260529104651_UpdateMediaItem")]
-    partial class UpdateMediaItem
+    [Migration("20260602061424_MediaArchiveDB_v2")]
+    partial class MediaArchiveDB_v2
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -75,6 +75,9 @@ namespace MediaArchive.Infrastructure.Migrations
                     b.Property<string>("SourceUrl")
                         .IsRequired()
                         .HasColumnType("text");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("integer");
 
                     b.Property<string>("ThumbnailUrl")
                         .IsRequired()

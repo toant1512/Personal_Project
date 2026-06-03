@@ -1,4 +1,6 @@
-﻿namespace MediaArchive.Domain.Entities;
+﻿using MediaArchive.Domain.Enums;
+
+namespace MediaArchive.Domain.Entities;
 
 public class MediaItem
 {
@@ -22,5 +24,5 @@ public class MediaItem
 
     public DateTime CreatedAt { get; set; }
 
-    public string Status { get; set; } = "Pending";  // Pending, Downloading, Completed, Failed
+    public DownloadStatus Status { get; set; }
 }

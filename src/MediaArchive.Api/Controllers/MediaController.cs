@@ -14,11 +14,13 @@ public class MediaController : ControllerBase
 {
     private readonly IMediaService _mediaService;
     private readonly IDownloadService _downloadService;
+    private readonly IDownloadQueue _downloadQueue;
 
-    public MediaController(IMediaService mediaService, IDownloadService downloadService)
+    public MediaController(IMediaService mediaService, IDownloadService downloadService, IDownloadQueue downloadQueue)
     {
         _mediaService = mediaService;
         _downloadService = downloadService;
+        _downloadQueue = downloadQueue;
     }
 
     [HttpPost]
@@ -54,9 +56,11 @@ public class MediaController : ControllerBase
     [HttpPost("download/{id}")]
     public async Task<IActionResult> Download(Guid id)
     {
-        await _downloadService.DownloadAudioAsync(id);
+        _downloadQueue.QueueDownload(id);
 
-        return Ok("Download completed");
+        await _mediaService.QueueDownloadAsync(id);
+
+        return Accepted("Download queued");
     }
 
     private Guid GetUserId()

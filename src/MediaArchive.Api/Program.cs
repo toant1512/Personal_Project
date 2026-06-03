@@ -1,4 +1,5 @@
 using MediaArchive.Infrastructure;
+using MediaArchive.Infrastructure.BackgroundServices;
 using MediaArchive.Infrastructure.Persistence;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
@@ -63,6 +64,8 @@ builder.Services
             IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"]!))
         };
     });
+
+builder.Services.AddHostedService<DownloadBackgroundService>();
 
 var app = builder.Build();
 

@@ -1,6 +1,7 @@
 ﻿using MediaArchive.Application.Media.DTOs;
 using MediaArchive.Application.Media.Interfaces;
 using MediaArchive.Domain.Entities;
+using MediaArchive.Domain.Enums;
 using MediaArchive.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 
@@ -59,6 +60,21 @@ public class MediaService : IMediaService
         }
 
         _context.MediaItems.Remove(media);
+
+        await _context.SaveChangesAsync();
+    }
+
+    public async Task QueueDownloadAsync(Guid mediaId)
+    {
+        var media = await _context.MediaItems
+            .FirstOrDefaultAsync(x => x.Id == mediaId);
+
+        if (media == null)
+        {
+            throw new Exception("Media not found");
+        }
+
+        media.Status = DownloadStatus.Queued;
 
         await _context.SaveChangesAsync();
     }
