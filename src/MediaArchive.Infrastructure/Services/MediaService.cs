@@ -42,7 +42,12 @@ public class MediaService : IMediaService
                 Id = x.Id,
                 Title = x.Title,
                 Platform = x.Platform,
-                SourceUrl = x.SourceUrl
+                SourceUrl = x.SourceUrl,
+                FilePath = x.FilePath,
+                ThumbnailUrl = x.ThumbnailUrl,
+                DurationSeconds = x.DurationSeconds,
+                CreatedAt = x.CreatedAt,
+                Status = x.Status.ToString()
             })
             .ToListAsync();
     }
