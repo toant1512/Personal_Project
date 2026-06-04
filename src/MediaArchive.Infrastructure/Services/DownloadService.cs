@@ -40,7 +40,7 @@ public class DownloadService : IDownloadService
             var outputPath = Path.Combine(
                     solutionRoot,
                     "downloads",
-                    $"{media.Id}.mp3");
+                    $"{media.Id}.mp3"); // may change to media.Title but need to handle it a bit
 
             var process = new Process();
 

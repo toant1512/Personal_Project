@@ -63,6 +63,33 @@ public class MediaController : ControllerBase
         return Accepted("Download queued");
     }
 
+    [HttpGet("{id}")]
+    public async Task<IActionResult> GetById(Guid id)
+    {
+        var userId = GetUserId();
+
+        var media = await _mediaService.GetByIdAsync(id, userId);
+
+        return Ok(media);
+    }
+
+    [HttpGet("{id}/file")]
+    public async Task<IActionResult> DownloadFile(Guid id)
+    {
+        var userId = GetUserId();
+
+        var media = await _mediaService.GetEntityByIdAsync(id, userId);
+
+        if (!System.IO.File.Exists(media.FilePath))
+        {
+            return NotFound("File not found");
+        }
+
+        var bytes = await System.IO.File.ReadAllBytesAsync(media.FilePath);
+
+        return File(bytes, "audio/mpeg", Path.GetFileName(media.FilePath));
+    }
+
     private Guid GetUserId()
     {
         var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);

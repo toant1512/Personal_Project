@@ -1,4 +1,5 @@
-﻿using MediaArchive.Application.Media.DTOs;
+﻿using MediaArchive.Application.Interfaces;
+using MediaArchive.Application.Media.DTOs;
 using MediaArchive.Application.Media.Interfaces;
 using MediaArchive.Domain.Entities;
 using MediaArchive.Domain.Enums;
@@ -10,22 +11,28 @@ namespace MediaArchive.Infrastructure.Services;
 public class MediaService : IMediaService
 {
     private readonly ApplicationDbContext _context;
+    private readonly IMediaMetadataService _metadataService;
 
-    public MediaService(ApplicationDbContext context)
+    public MediaService(ApplicationDbContext context, IMediaMetadataService metadataService)
     {
         _context = context;
+        _metadataService = metadataService;
     }
 
     public async Task CreateAsync(Guid userId, CreateMediaRequest request)
     {
+        var metadata = await _metadataService.ExtractAsync(request.SourceUrl);
+
         var media = new MediaItem
         {
             Id = Guid.NewGuid(),
             UserId = userId,
-            Title = request.Title,
             SourceUrl = request.SourceUrl,
-            Platform = request.Platform,
-            CreatedAt = DateTime.UtcNow
+            CreatedAt = DateTime.UtcNow,
+            Title = metadata.Title,
+            Platform = metadata.Platform,
+            ThumbnailUrl = metadata.ThumbnailUrl,
+            DurationSeconds = metadata.DurationSeconds
         };
 
         _context.MediaItems.Add(media);
@@ -82,5 +89,42 @@ public class MediaService : IMediaService
         media.Status = DownloadStatus.Queued;
 
         await _context.SaveChangesAsync();
+    }
+
+    public async Task<MediaResponse> GetByIdAsync(Guid mediaId, Guid userId)
+    {
+        var media = await _context.MediaItems
+            .FirstOrDefaultAsync(x => x.Id == mediaId && x.UserId == userId);
+
+        if (media == null)
+        {
+            throw new Exception("Media not found");
+        }
+
+        return new MediaResponse
+        {
+            Id = media.Id,
+            Title = media.Title,
+            Platform = media.Platform,
+            SourceUrl = media.SourceUrl,
+            FilePath = media.FilePath,
+            ThumbnailUrl = media.ThumbnailUrl,
+            DurationSeconds = media.DurationSeconds,
+            CreatedAt = media.CreatedAt,
+            Status = media.Status.ToString()
+        };
+    }
+
+    public async Task<MediaItem> GetEntityByIdAsync(Guid mediaId, Guid userId)
+    {
+        var media = await _context.MediaItems
+            .FirstOrDefaultAsync(x => x.Id == mediaId && x.UserId == userId);
+
+        if (media == null)
+        {
+            throw new Exception("Media not found");
+        }
+
+        return media;
     }
 }

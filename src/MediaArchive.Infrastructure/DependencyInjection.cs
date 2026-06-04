@@ -22,6 +22,7 @@ public static class DependencyInjection
         services.AddScoped<IMediaService, MediaService>();
         services.AddScoped<IDownloadService, DownloadService>();
         services.AddSingleton<IDownloadQueue, DownloadQueue>();
+        services.AddScoped<IMediaMetadataService, MediaMetadataService>();
 
         return services;
     }
