@@ -39,7 +39,9 @@ public class MediaMetadataService : IMediaMetadataService
             Title = result.Title ?? "",
             DurationSeconds = result.Duration ?? 0,
             ThumbnailUrl = result.Thumbnail ?? "",
-            Platform = result.Extractor ?? ""
+            Platform = result.Extractor ?? "",
+            Uploader = result.Uploader ?? "",
+            ChannelName = result.Channel ?? ""
         };
     }
 }

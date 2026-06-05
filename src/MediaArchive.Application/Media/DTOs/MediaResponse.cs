@@ -16,6 +16,10 @@ public class MediaResponse
 
     public int DurationSeconds { get; set; }
 
+    public string Uploader { get; set; } = string.Empty;
+
+    public string ChannelName { get; set; } = string.Empty;
+
     public DateTime CreatedAt { get; set; }
 
     public string Status { get; set; } = null!;

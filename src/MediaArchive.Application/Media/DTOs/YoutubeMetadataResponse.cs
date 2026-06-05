@@ -15,4 +15,10 @@ public class YoutubeMetadataResponse
 
     [JsonPropertyName("extractor")]
     public string? Extractor { get; set; }
+
+    [JsonPropertyName("uploader")]
+    public string? Uploader { get; set; }
+
+    [JsonPropertyName("channel")]
+    public string? Channel { get; set; }
 }

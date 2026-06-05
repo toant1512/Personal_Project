@@ -9,4 +9,8 @@ public class MediaMetadataDto
     public string ThumbnailUrl { get; set; } = string.Empty;
 
     public int DurationSeconds { get; set; }
+
+    public string Uploader { get; set; } = string.Empty;
+
+    public string ChannelName { get; set; } = string.Empty;
 }

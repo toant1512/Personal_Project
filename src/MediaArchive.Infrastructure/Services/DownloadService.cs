@@ -1,4 +1,5 @@
-﻿using MediaArchive.Application.Interfaces;
+﻿using MediaArchive.Application.Exceptions;
+using MediaArchive.Application.Interfaces;
 using MediaArchive.Domain.Enums;
 using MediaArchive.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
@@ -22,7 +23,7 @@ public class DownloadService : IDownloadService
 
         if (media == null)
         {
-            throw new Exception("Media not found");
+            throw new NotFoundException("Media not found");
         }
 
         try

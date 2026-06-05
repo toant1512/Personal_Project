@@ -1,4 +1,5 @@
-﻿using MediaArchive.Application.Interfaces;
+﻿using MediaArchive.Application.Exceptions;
+using MediaArchive.Application.Interfaces;
 using MediaArchive.Application.Media.DTOs;
 using MediaArchive.Application.Media.Interfaces;
 using MediaArchive.Domain.Entities;
@@ -21,6 +22,14 @@ public class MediaService : IMediaService
 
     public async Task CreateAsync(Guid userId, CreateMediaRequest request)
     {
+        var existingMedia = await _context.MediaItems
+            .FirstOrDefaultAsync(x => x.UserId == userId && x.SourceUrl == request.SourceUrl);
+
+        if (existingMedia != null)
+        {
+            throw new BadRequestException("Media already exists");
+        }
+
         var metadata = await _metadataService.ExtractAsync(request.SourceUrl);
 
         var media = new MediaItem
@@ -32,7 +41,9 @@ public class MediaService : IMediaService
             Title = metadata.Title,
             Platform = metadata.Platform,
             ThumbnailUrl = metadata.ThumbnailUrl,
-            DurationSeconds = metadata.DurationSeconds
+            DurationSeconds = metadata.DurationSeconds,
+            Uploader = metadata.Uploader,
+            ChannelName = metadata.ChannelName
         };
 
         _context.MediaItems.Add(media);
@@ -53,6 +64,8 @@ public class MediaService : IMediaService
                 FilePath = x.FilePath,
                 ThumbnailUrl = x.ThumbnailUrl,
                 DurationSeconds = x.DurationSeconds,
+                Uploader = x.Uploader,
+                ChannelName = x.ChannelName,
                 CreatedAt = x.CreatedAt,
                 Status = x.Status.ToString()
             })
@@ -68,7 +81,7 @@ public class MediaService : IMediaService
 
         if (media == null)
         {
-            throw new Exception("Media not found");
+            throw new NotFoundException("Media not found");
         }
 
         _context.MediaItems.Remove(media);
@@ -83,7 +96,7 @@ public class MediaService : IMediaService
 
         if (media == null)
         {
-            throw new Exception("Media not found");
+            throw new NotFoundException("Media not found");
         }
 
         media.Status = DownloadStatus.Queued;
@@ -98,7 +111,7 @@ public class MediaService : IMediaService
 
         if (media == null)
         {
-            throw new Exception("Media not found");
+            throw new NotFoundException("Media not found");
         }
 
         return new MediaResponse
@@ -122,7 +135,7 @@ public class MediaService : IMediaService
 
         if (media == null)
         {
-            throw new Exception("Media not found");
+            throw new NotFoundException("Media not found");
         }
 
         return media;

@@ -1,3 +1,4 @@
+using MediaArchive.Api.Middleware;
 using MediaArchive.Infrastructure;
 using MediaArchive.Infrastructure.BackgroundServices;
 using MediaArchive.Infrastructure.Persistence;
@@ -76,6 +77,8 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+
+app.UseMiddleware<ExceptionMiddleware>();
 
 app.UseAuthentication();
 

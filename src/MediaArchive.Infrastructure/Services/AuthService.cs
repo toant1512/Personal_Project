@@ -1,6 +1,7 @@
 ﻿using BCrypt.Net;
 using MediaArchive.Application.Authentication.DTOs;
 using MediaArchive.Application.Authentication.Interfaces;
+using MediaArchive.Application.Exceptions;
 using MediaArchive.Domain.Entities;
 using MediaArchive.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
@@ -24,7 +25,7 @@ public class AuthService : IAuthService
 
         if (existingUser != null)
         {
-            throw new Exception("Email already exists");
+            throw new BadRequestException("Email already exists");
         }
 
         var user = new User
@@ -48,14 +49,14 @@ public class AuthService : IAuthService
 
         if (user == null)
         {
-            throw new Exception("Invalid credentials");
+            throw new BadRequestException("Wrong email or password!");
         }
 
         bool validPassword = BCrypt.Net.BCrypt.Verify(request.Password, user.PasswordHash);
 
         if (!validPassword)
         {
-            throw new Exception("Invalid credentials");
+            throw new BadRequestException("Wrong email or password!");
         }
 
         return _jwtService.GenerateToken(user);

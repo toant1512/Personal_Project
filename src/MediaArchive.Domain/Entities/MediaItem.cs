@@ -22,6 +22,10 @@ public class MediaItem
 
     public int DurationSeconds { get; set; }
 
+    public string Uploader { get; set; } = string.Empty;
+
+    public string ChannelName { get; set; } = string.Empty;
+
     public DateTime CreatedAt { get; set; }
 
     public DownloadStatus Status { get; set; }
