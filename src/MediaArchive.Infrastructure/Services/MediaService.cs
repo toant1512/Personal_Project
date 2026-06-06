@@ -54,7 +54,9 @@ public class MediaService : IMediaService
 
     public async Task<PagedResponse<MediaResponse>> GetAllAsync(Guid userId, PagedRequest request)
     {
-        var query = _context.MediaItems.Where(x => x.UserId == userId);
+        var query = _context.MediaItems
+            .Where(x => x.UserId == userId && x.Title.ToLower().Contains(request.Search!.ToLower()));
+
         var totalCount = await query.CountAsync();
 
         var items = await query
