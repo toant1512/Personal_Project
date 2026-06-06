@@ -1,4 +1,5 @@
-﻿using MediaArchive.Application.Exceptions;
+﻿using MediaArchive.Application.Common.Models;
+using MediaArchive.Application.Exceptions;
 using MediaArchive.Application.Interfaces;
 using MediaArchive.Application.Media.DTOs;
 using MediaArchive.Application.Media.Interfaces;
@@ -51,10 +52,17 @@ public class MediaService : IMediaService
         await _context.SaveChangesAsync();
     }
 
-    public async Task<List<MediaResponse>> GetAllAsync(Guid userId)
+    public async Task<PagedResponse<MediaResponse>> GetAllAsync(Guid userId, PagedRequest request)
     {
-        return await _context.MediaItems
-            .Where(x => x.UserId == userId)
+        var query = _context.MediaItems.Where(x => x.UserId == userId);
+        var totalCount = await query.CountAsync();
+
+        var items = await query
+            .OrderByDescending(x => x.CreatedAt)
+            .Skip(
+                (request.Page - 1)
+                * request.PageSize)
+            .Take(request.PageSize)
             .Select(x => new MediaResponse
             {
                 Id = x.Id,
@@ -70,6 +78,15 @@ public class MediaService : IMediaService
                 Status = x.Status.ToString()
             })
             .ToListAsync();
+
+        return new PagedResponse<MediaResponse>
+        {
+            Items = items,
+            Page = request.Page,
+            PageSize = request.PageSize,
+            TotalCount = totalCount,
+            TotalPages = (int)Math.Ceiling(totalCount / (double)request.PageSize)
+        };
     }
 
     public async Task DeleteAsync(Guid mediaId, Guid userId)

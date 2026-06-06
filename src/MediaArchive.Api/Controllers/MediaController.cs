@@ -1,4 +1,6 @@
-﻿using MediaArchive.Application.Interfaces;
+﻿using MediaArchive.Application.Common.Models;
+using MediaArchive.Application.Exceptions;
+using MediaArchive.Application.Interfaces;
 using MediaArchive.Application.Media.DTOs;
 using MediaArchive.Application.Media.Interfaces;
 using Microsoft.AspNetCore.Authorization;
@@ -34,13 +36,23 @@ public class MediaController : ControllerBase
     }
 
     [HttpGet]
-    public async Task<IActionResult> GetAll()
+    public async Task<IActionResult> GetAll([FromQuery] PagedRequest request)
     {
+        if (request.Page <= 0)
+        {
+            throw new BadRequestException("Page must be greater than 0");
+        }
+
+        if (request.PageSize <= 0)
+        {
+            throw new BadRequestException("PageSize must be greater than 0");
+        }
+
         var userId = GetUserId();
 
-        var media = await _mediaService.GetAllAsync(userId);
+        var result = await _mediaService.GetAllAsync(userId, request);
 
-        return Ok(media);
+        return Ok(result);
     }
 
     [HttpDelete("{id}")]

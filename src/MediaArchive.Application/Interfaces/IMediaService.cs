@@ -1,4 +1,5 @@
-﻿using MediaArchive.Application.Media.DTOs;
+﻿using MediaArchive.Application.Common.Models;
+using MediaArchive.Application.Media.DTOs;
 using MediaArchive.Domain.Entities;
 
 namespace MediaArchive.Application.Media.Interfaces;
@@ -7,7 +8,7 @@ public interface IMediaService
 {
     Task CreateAsync(Guid userId, CreateMediaRequest request);
 
-    Task<List<MediaResponse>> GetAllAsync(Guid userId);
+    Task<PagedResponse<MediaResponse>>GetAllAsync(Guid userId, PagedRequest request);
 
     Task DeleteAsync(Guid mediaId, Guid userId);
 
