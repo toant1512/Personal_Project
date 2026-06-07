@@ -74,6 +74,11 @@ builder.Services
         };
     });
 
+builder.Services.AddHealthChecks()
+    .AddNpgSql(
+        builder.Configuration
+            .GetConnectionString("DefaultConnection")!);
+
 builder.Services.AddHostedService<DownloadBackgroundService>();
 
 var app = builder.Build();
@@ -99,5 +104,7 @@ app.MapControllers();
 var scope = app.Services.CreateScope();
 
 var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+
+app.MapHealthChecks("/health");
 
 app.Run();
