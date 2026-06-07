@@ -7,6 +7,7 @@ using MediaArchive.Domain.Entities;
 using MediaArchive.Domain.Enums;
 using MediaArchive.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 
 namespace MediaArchive.Infrastructure.Services;
 
@@ -14,11 +15,12 @@ public class MediaService : IMediaService
 {
     private readonly ApplicationDbContext _context;
     private readonly IMediaMetadataService _metadataService;
-
-    public MediaService(ApplicationDbContext context, IMediaMetadataService metadataService)
+    private readonly ILogger<MediaService> _logger;
+    public MediaService(ApplicationDbContext context, IMediaMetadataService metadataService, ILogger<MediaService> logger)
     {
         _context = context;
         _metadataService = metadataService;
+        _logger = logger;
     }
 
     public async Task CreateAsync(Guid userId, CreateMediaRequest request)
@@ -28,6 +30,8 @@ public class MediaService : IMediaService
 
         if (existingMedia != null)
         {
+            _logger.LogWarning("Duplicate media attempted by user {UserId}", userId);
+
             throw new BadRequestException("Media already exists");
         }
 
@@ -50,6 +54,8 @@ public class MediaService : IMediaService
         _context.MediaItems.Add(media);
 
         await _context.SaveChangesAsync();
+
+        _logger.LogInformation("User {UserId} created media {MediaId}", userId, media.Id);
     }
 
     public async Task<PagedResponse<MediaResponse>> GetAllAsync(Guid userId, PagedRequest request)

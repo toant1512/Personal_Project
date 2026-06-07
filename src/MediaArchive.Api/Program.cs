@@ -5,8 +5,16 @@ using MediaArchive.Infrastructure.Persistence;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
+using Serilog;
+
+Log.Logger = new LoggerConfiguration()
+    .WriteTo.Console()
+    .WriteTo.File("logs/mediaarchive-.txt", rollingInterval: RollingInterval.Day)
+    .CreateLogger();
 
 var builder = WebApplication.CreateBuilder(args);
+
+builder.Host.UseSerilog();
 
 builder.Services.AddControllers();
 
@@ -70,6 +78,8 @@ builder.Services.AddHostedService<DownloadBackgroundService>();
 
 var app = builder.Build();
 
+Log.Information("MediaArchive API starting");
+
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
@@ -88,7 +98,6 @@ app.MapControllers();
 
 var scope = app.Services.CreateScope();
 
-var db = scope.ServiceProvider
-    .GetRequiredService<ApplicationDbContext>();
+var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
 
 app.Run();

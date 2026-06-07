@@ -3,6 +3,7 @@ using MediaArchive.Application.Interfaces;
 using MediaArchive.Domain.Enums;
 using MediaArchive.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 using System.Diagnostics;
 
 namespace MediaArchive.Infrastructure.Services;
@@ -10,10 +11,12 @@ namespace MediaArchive.Infrastructure.Services;
 public class DownloadService : IDownloadService
 {
     private readonly ApplicationDbContext _context;
+    private readonly ILogger<MediaService> _logger;
 
-    public DownloadService(ApplicationDbContext context)
+    public DownloadService(ApplicationDbContext context, ILogger<MediaService> logger)
     {
         _context = context;
+        _logger = logger;
     }
 
     public async Task DownloadAudioAsync(Guid mediaId)
@@ -28,6 +31,7 @@ public class DownloadService : IDownloadService
 
         try
         {
+            _logger.LogInformation("Starting download for media {MediaId}", media.Id);
             media.Status = DownloadStatus.Downloading;
 
             await _context.SaveChangesAsync();
@@ -67,9 +71,13 @@ public class DownloadService : IDownloadService
             media.Status = DownloadStatus.Completed;
 
             await _context.SaveChangesAsync();
+
+            _logger.LogInformation("Completed download for media {MediaId}", media.Id);
         }
-        catch
+        catch (Exception ex)
         {
+            _logger.LogError(ex, "Download failed for media {MediaId}", media.Id);
+
             media.Status = DownloadStatus.Failed;
 
             await _context.SaveChangesAsync();

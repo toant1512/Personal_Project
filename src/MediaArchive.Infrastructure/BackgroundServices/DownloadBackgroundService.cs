@@ -23,8 +23,7 @@ public class DownloadBackgroundService : BackgroundService
 
             using var scope = _serviceProvider.CreateScope();
 
-            var downloadService = scope.ServiceProvider
-                .GetRequiredService<IDownloadService>();
+            var downloadService = scope.ServiceProvider.GetRequiredService<IDownloadService>();
 
             try
             {

@@ -61,3 +61,7 @@ nunit-*.xml
 
 # Download folder
 downloads/
+
+# Serilog
+logs/
+*.log
