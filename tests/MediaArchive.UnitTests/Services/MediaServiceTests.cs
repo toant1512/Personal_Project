@@ -14,6 +14,9 @@ namespace MediaArchive.Tests.Services
 {
     public class MediaServiceTests
     {
+        private readonly Mock<IMediaMetadataService> metadataService = new Mock<IMediaMetadataService>();
+        private readonly Mock<ILogger<MediaService>> logger = new Mock<ILogger<MediaService>>();
+
         private ApplicationDbContext CreateDbContext()
         {
             var options = new DbContextOptionsBuilder<ApplicationDbContext>()
@@ -27,12 +30,11 @@ namespace MediaArchive.Tests.Services
         public async Task CreateAsync_ShouldThrow_WhenDuplicateExists()
         {
             // Arrange
-            var metadataService = new Mock<IMediaMetadataService>();
-            var logger = new Mock<ILogger<MediaService>>();
             var dbContext = CreateDbContext();
             var userId = Guid.NewGuid();
 
-            metadataService.Setup(x => x.ExtractAsync(It.IsAny<string>()))
+            metadataService
+                .Setup(x => x.ExtractAsync(It.IsAny<string>()))
                 .ReturnsAsync(new MediaMetadataDto
                 {
                     Title = "Test Song",
@@ -50,7 +52,7 @@ namespace MediaArchive.Tests.Services
                 Status = DownloadStatus.Completed,
                 CreatedAt = DateTime.UtcNow
             });
-            dbContext.SaveChanges();
+            await dbContext.SaveChangesAsync(TestContext.Current.CancellationToken);
 
             var service = new MediaService(dbContext, metadataService.Object, logger.Object);
 
@@ -65,6 +67,43 @@ namespace MediaArchive.Tests.Services
             // Assert
             await act.Should().ThrowAsync<BadRequestException>();
 
+        }
+
+        [Fact]
+        public async Task CreateAsync_ShouldCreateMedia_WhenRequestIsValid()
+        {
+            // Arrange
+            var userId = Guid.NewGuid();
+            var dbContext = CreateDbContext();
+
+            metadataService
+                .Setup(x => x.ExtractAsync(It.IsAny<string>()))
+                .ReturnsAsync(new MediaMetadataDto
+                {
+                    Title = "Test Song",
+                    Platform = "youtube",
+                    DurationSeconds = 120,
+                    ThumbnailUrl = "thumbnail.jpg"
+                });
+
+            var service = new MediaService(dbContext, metadataService.Object, logger.Object);
+
+            var request = new CreateMediaRequest
+            {
+                SourceUrl = "https://youtube.com/watch?v=test"
+            };
+
+            // Act
+            await service.CreateAsync(userId, request);
+
+            // Assert
+            var mediaItem = await dbContext.MediaItems.FirstOrDefaultAsync(cancellationToken: TestContext.Current.CancellationToken);
+            mediaItem.Should().NotBeNull();
+            mediaItem.UserId.Should().Be(userId);
+            mediaItem.SourceUrl.Should().Be(request.SourceUrl);
+            mediaItem.Title.Should().Be("Test Song");
+            mediaItem.Platform.Should().Be("youtube");
+            mediaItem.Status.Should().Be(DownloadStatus.Pending);
         }
     }
 }
