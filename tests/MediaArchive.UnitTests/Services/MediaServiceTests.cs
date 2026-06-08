@@ -1,14 +1,15 @@
 ﻿using FluentAssertions;
+using MediaArchive.Application.Common.Models;
 using MediaArchive.Application.Exceptions;
 using MediaArchive.Application.Interfaces;
 using MediaArchive.Application.Media.DTOs;
 using MediaArchive.Domain.Entities;
+using MediaArchive.Domain.Enums;
 using MediaArchive.Infrastructure.Persistence;
 using MediaArchive.Infrastructure.Services;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Moq;
-using MediaArchive.Domain.Enums;
 
 namespace MediaArchive.Tests.Services
 {
@@ -104,6 +105,50 @@ namespace MediaArchive.Tests.Services
             mediaItem.Title.Should().Be("Test Song");
             mediaItem.Platform.Should().Be("youtube");
             mediaItem.Status.Should().Be(DownloadStatus.Pending);
+        }
+
+        [Fact]
+        public async Task GetAllAsync_ShouldReturnPagedResults()
+        {
+            // Arrange
+            var userId = Guid.NewGuid();
+            var dbContext = CreateDbContext();
+
+            for (int i = 1; i <= 5; i++)
+            {
+                dbContext.MediaItems.Add(new MediaItem
+                {
+                    Id = Guid.NewGuid(),
+                    UserId = userId,
+                    Title = $"Song {i}",
+                    Platform = "youtube",
+                    SourceUrl = $"https://youtube.com/watch?v={i}",
+                    Status = DownloadStatus.Completed,
+                    CreatedAt = DateTime.UtcNow.AddDays(i)
+                });
+            }
+
+            await dbContext.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+            var service = new MediaService(dbContext, metadataService.Object, logger.Object);
+
+            var request = new PagedRequest
+            {
+                Page = 1,
+                PageSize = 2
+            };
+
+            // Act
+            var result = await service.GetAllAsync(userId, request);
+
+            // Assert
+            result.Items.Should().HaveCount(2);
+            result.TotalCount.Should().Be(5);
+            result.Page.Should().Be(1);
+            result.PageSize.Should().Be(2);
+            result.TotalPages.Should().Be(3);
+            result.Items.ElementAt(0).Title.Should().Be("Song 5");
+            result.Items.ElementAt(1).Title.Should().Be("Song 4");
         }
     }
 }
