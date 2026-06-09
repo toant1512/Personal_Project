@@ -150,5 +150,123 @@ namespace MediaArchive.Tests.Services
             result.Items.ElementAt(0).Title.Should().Be("Song 5");
             result.Items.ElementAt(1).Title.Should().Be("Song 4");
         }
+
+        [Fact]
+        public async Task GetAllAsync_ShouldReturnOnlyCurrentUserMedia()
+        {
+            // Arrange
+            var userA = Guid.NewGuid();
+            var userB = Guid.NewGuid();
+
+            var dbContext = CreateDbContext();
+
+            dbContext.MediaItems.Add(new MediaItem
+            {
+                Id = Guid.NewGuid(),
+                UserId = userA,
+                Title = "User A Song",
+                Platform = "youtube",
+                SourceUrl = "https://youtube.com/a",
+                Status = DownloadStatus.Completed,
+                CreatedAt = DateTime.UtcNow
+            });
+
+            dbContext.MediaItems.Add(new MediaItem
+            {
+                Id = Guid.NewGuid(),
+                UserId = userB,
+                Title = "User B Song",
+                Platform = "youtube",
+                SourceUrl = "https://youtube.com/b",
+                Status = DownloadStatus.Completed,
+                CreatedAt = DateTime.UtcNow
+            });
+
+            await dbContext.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+            var service = new MediaService(dbContext, metadataService.Object, logger.Object);
+
+            // Act
+            var result = await service.GetAllAsync(userA, new PagedRequest());
+
+            // Assert
+            result.Items.Should().HaveCount(1);
+            result.Items.ElementAt(0).Title.Should().Be("User A Song");
+            result.Items.Should().NotContain(x => x.Title == "User B Song");
+        }
+
+        [Fact]
+        public async Task Search_ShouldFilterByTitle()
+        {
+            // Arrange
+            var userId = Guid.NewGuid();
+
+            var dbContext = CreateDbContext();
+
+            dbContext.MediaItems.AddRange(
+                new MediaItem
+                {
+                    Id = Guid.NewGuid(),
+                    UserId = userId,
+                    Title = "Wildfire",
+                    Platform = "youtube",
+                    SourceUrl = "url1",
+                    Status = DownloadStatus.Completed,
+                    CreatedAt = DateTime.UtcNow
+                },
+                new MediaItem
+                {
+                    Id = Guid.NewGuid(),
+                    UserId = userId,
+                    Title = "Moon Halo",
+                    Platform = "youtube",
+                    SourceUrl = "url2",
+                    Status = DownloadStatus.Completed,
+                    CreatedAt = DateTime.UtcNow
+                },
+                new MediaItem
+                {
+                    Id = Guid.NewGuid(),
+                    UserId = userId,
+                    Title = "Hope Is The Thing With Feathers",
+                    Platform = "youtube",
+                    SourceUrl = "url3",
+                    Status = DownloadStatus.Completed,
+                    CreatedAt = DateTime.UtcNow
+                });
+
+            await dbContext.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+            var service = new MediaService(dbContext, metadataService.Object, logger.Object);
+
+            // Act
+            var result = await service.GetAllAsync(userId,
+                new PagedRequest
+                {
+                    Search = "wild"
+                });
+
+            // Assert
+            result.Items.Should().HaveCount(1);
+            result.Items.ElementAt(0).Title.Should().Be("Wildfire");
+        }
+
+        [Fact]
+        public async Task GetAllAsync_ShouldReturnEmpty_WhenUserHasNoMedia()
+        {
+            // Arrange
+            var userId = Guid.NewGuid();
+
+            var dbContext = CreateDbContext();
+
+            var service = new MediaService(dbContext, metadataService.Object, logger.Object);
+
+            // Act
+            var result = await service.GetAllAsync(userId, new PagedRequest());
+
+            // Assert
+            result.Items.Should().BeEmpty();
+            result.TotalCount.Should().Be(0);
+        }
     }
 }
