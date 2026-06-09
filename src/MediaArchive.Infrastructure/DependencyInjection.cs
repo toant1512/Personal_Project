@@ -1,6 +1,4 @@
-﻿using MediaArchive.Application.Authentication.Interfaces;
-using MediaArchive.Application.Interfaces;
-using MediaArchive.Application.Media.Interfaces;
+﻿using MediaArchive.Application.Interfaces;
 using MediaArchive.Infrastructure.Persistence;
 using MediaArchive.Infrastructure.Services;
 using Microsoft.EntityFrameworkCore;

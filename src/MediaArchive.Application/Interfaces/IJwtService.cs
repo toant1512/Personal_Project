@@ -1,6 +1,6 @@
 ﻿using MediaArchive.Domain.Entities;
 
-namespace MediaArchive.Application.Authentication.Interfaces;
+namespace MediaArchive.Application.Interfaces;
 
 public interface IJwtService
 {

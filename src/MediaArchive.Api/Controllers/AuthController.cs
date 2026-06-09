@@ -1,5 +1,5 @@
 ﻿using MediaArchive.Application.Authentication.DTOs;
-using MediaArchive.Application.Authentication.Interfaces;
+using MediaArchive.Application.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 
 namespace MediaArchive.Api.Controllers;

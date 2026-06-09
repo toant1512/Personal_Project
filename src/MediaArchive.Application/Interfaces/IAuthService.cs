@@ -1,4 +1,4 @@
-﻿namespace MediaArchive.Application.Authentication.Interfaces;
+﻿namespace MediaArchive.Application.Interfaces;
 
 using MediaArchive.Application.Authentication.DTOs;
 

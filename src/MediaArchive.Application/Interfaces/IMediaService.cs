@@ -2,7 +2,7 @@
 using MediaArchive.Application.Media.DTOs;
 using MediaArchive.Domain.Entities;
 
-namespace MediaArchive.Application.Media.Interfaces;
+namespace MediaArchive.Application.Interfaces;
 
 public interface IMediaService
 {

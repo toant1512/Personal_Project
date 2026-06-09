@@ -1,4 +1,4 @@
-﻿using MediaArchive.Application.Authentication.Interfaces;
+﻿using MediaArchive.Application.Interfaces;
 using MediaArchive.Domain.Entities;
 using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;

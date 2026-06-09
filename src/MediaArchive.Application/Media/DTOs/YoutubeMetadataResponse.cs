@@ -1,6 +1,6 @@
 ﻿using System.Text.Json.Serialization;
 
-namespace MediaArchive.Infrastructure.Services;
+namespace MediaArchive.Application.Media.DTOs;
 
 public class YoutubeMetadataResponse
 {

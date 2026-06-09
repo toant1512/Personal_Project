@@ -1,7 +1,7 @@
 ﻿using BCrypt.Net;
 using MediaArchive.Application.Authentication.DTOs;
-using MediaArchive.Application.Authentication.Interfaces;
 using MediaArchive.Application.Exceptions;
+using MediaArchive.Application.Interfaces;
 using MediaArchive.Domain.Entities;
 using MediaArchive.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;

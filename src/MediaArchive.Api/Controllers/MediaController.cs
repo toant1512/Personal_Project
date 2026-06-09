@@ -2,7 +2,6 @@
 using MediaArchive.Application.Exceptions;
 using MediaArchive.Application.Interfaces;
 using MediaArchive.Application.Media.DTOs;
-using MediaArchive.Application.Media.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
