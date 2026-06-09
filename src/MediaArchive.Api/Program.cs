@@ -3,9 +3,10 @@ using MediaArchive.Infrastructure;
 using MediaArchive.Infrastructure.BackgroundServices;
 using MediaArchive.Infrastructure.Persistence;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
-using System.Text;
 using Serilog;
+using System.Text;
 
 Log.Logger = new LoggerConfiguration()
     .WriteTo.Console()
@@ -104,6 +105,8 @@ app.MapControllers();
 var scope = app.Services.CreateScope();
 
 var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+
+db.Database.Migrate();
 
 app.MapHealthChecks("/health");
 

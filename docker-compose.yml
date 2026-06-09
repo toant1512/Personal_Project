@@ -1,0 +1,41 @@
+services:
+
+  postgres:
+    image: postgres:17
+    container_name: mediaarchive-postgres
+
+    environment:
+      POSTGRES_DB: MediaArchiveDb
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+
+    ports:
+      - "5432:5432"
+
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+
+    container_name: mediaarchive-api
+
+    depends_on:
+      - postgres
+
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+
+      ConnectionStrings__DefaultConnection: Host=postgres;Port=5432;Database=MediaArchiveDb;Username=postgres;Password=postgres
+
+      Jwt__Key: 76145d309057e638a46277f4693bb4c8170501db7040bc179672534065969ac2
+      Jwt__Issuer: MediaArchive
+      Jwt__Audience: MediaArchiveUsers
+
+    ports:
+      - "5000:8080"
+
+volumes:
+  postgres-data:
