@@ -15,21 +15,23 @@ public class MediaController : ControllerBase
 {
     private readonly IMediaService _mediaService;
     private readonly IDownloadService _downloadService;
-    private readonly IDownloadQueue _downloadQueue;
 
-    public MediaController(IMediaService mediaService, IDownloadService downloadService, IDownloadQueue downloadQueue)
+    public MediaController(IMediaService mediaService, IDownloadService downloadService)
     {
         _mediaService = mediaService;
         _downloadService = downloadService;
-        _downloadQueue = downloadQueue;
     }
 
-    [HttpPost]
+    [HttpPost("save")]
     public async Task<IActionResult> Create(CreateMediaRequest request)
     {
         var userId = GetUserId();
+        if (userId is null)
+        {
+            return Unauthorized("User unauthorized");
+        }
 
-        await _mediaService.CreateAsync(userId, request);
+        await _mediaService.CreateAsync(userId.Value, request);
 
         return Ok("Media created");
     }
@@ -48,8 +50,12 @@ public class MediaController : ControllerBase
         }
 
         var userId = GetUserId();
+        if (userId is null)
+        {
+            return Unauthorized("User unauthorized");
+        }
 
-        var result = await _mediaService.GetAllAsync(userId, request);
+        var result = await _mediaService.GetAllAsync(userId.Value, request);
 
         return Ok(result);
     }
@@ -58,8 +64,12 @@ public class MediaController : ControllerBase
     public async Task<IActionResult> Delete(Guid id)
     {
         var userId = GetUserId();
+        if (userId is null)
+        {
+            return Unauthorized("User unauthorized");
+        }
 
-        await _mediaService.DeleteAsync(id, userId);
+        await _mediaService.DeleteAsync(id, userId.Value);
 
         return Ok("Media deleted");
     }
@@ -67,9 +77,13 @@ public class MediaController : ControllerBase
     [HttpPost("download/{id}")]
     public async Task<IActionResult> Download(Guid id)
     {
-        _downloadQueue.QueueDownload(id);
+        var userId = GetUserId();
+        if (userId is null)
+        {
+            return Unauthorized("User unauthorized");
+        }
 
-        await _mediaService.QueueDownloadAsync(id);
+        await _mediaService.RequestDownloadAsync(userId.Value, id);
 
         return Accepted("Download queued");
     }
@@ -78,18 +92,26 @@ public class MediaController : ControllerBase
     public async Task<IActionResult> GetById(Guid id)
     {
         var userId = GetUserId();
+        if (userId is null)
+        {
+            return Unauthorized("User unauthorized");
+        }
 
-        var media = await _mediaService.GetByIdAsync(id, userId);
+        var media = await _mediaService.GetByIdAsync(id, userId.Value);
 
         return Ok(media);
     }
 
-    [HttpGet("{id}/file")]
-    public async Task<IActionResult> DownloadFile(Guid id)
+    [HttpGet("extract-file/{id}")]
+    public async Task<IActionResult> ExtractFile(Guid id)
     {
         var userId = GetUserId();
+        if (userId is null)
+        {
+            return Unauthorized("User unauthorized");
+        }
 
-        var media = await _mediaService.GetEntityByIdAsync(id, userId);
+        var media = await _mediaService.GetEntityByIdAsync(id, userId.Value);
 
         if (!System.IO.File.Exists(media.FilePath))
         {
@@ -101,10 +123,12 @@ public class MediaController : ControllerBase
         return File(bytes, "audio/mpeg", Path.GetFileName(media.FilePath));
     }
 
-    private Guid GetUserId()
+    private Guid? GetUserId()
     {
         var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
 
-        return Guid.Parse(userId!);
+        return Guid.TryParse(userId, out var result)
+        ? result
+        : null;
     }
 }

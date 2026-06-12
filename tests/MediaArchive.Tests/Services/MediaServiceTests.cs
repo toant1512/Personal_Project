@@ -10,6 +10,7 @@ using MediaArchive.Infrastructure.Services;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Moq;
+using static Microsoft.ApplicationInsights.MetricDimensionNames.TelemetryContext;
 
 namespace MediaArchive.Tests.Services
 {
@@ -17,6 +18,7 @@ namespace MediaArchive.Tests.Services
     {
         private readonly Mock<IMediaMetadataService> metadataService = new Mock<IMediaMetadataService>();
         private readonly Mock<ILogger<MediaService>> logger = new Mock<ILogger<MediaService>>();
+        private readonly Mock<IDownloadQueue> downloadQueue = new Mock<IDownloadQueue>();
 
         private ApplicationDbContext CreateDbContext()
         {
@@ -55,7 +57,7 @@ namespace MediaArchive.Tests.Services
             });
             await dbContext.SaveChangesAsync(TestContext.Current.CancellationToken);
 
-            var service = new MediaService(dbContext, metadataService.Object, logger.Object);
+            var service = new MediaService(dbContext, metadataService.Object, downloadQueue.Object, logger.Object);
 
             var request = new CreateMediaRequest
             {
@@ -87,7 +89,7 @@ namespace MediaArchive.Tests.Services
                     ThumbnailUrl = "thumbnail.jpg"
                 });
 
-            var service = new MediaService(dbContext, metadataService.Object, logger.Object);
+            var service = new MediaService(dbContext, metadataService.Object, downloadQueue.Object, logger.Object);
 
             var request = new CreateMediaRequest
             {
@@ -130,7 +132,7 @@ namespace MediaArchive.Tests.Services
 
             await dbContext.SaveChangesAsync(TestContext.Current.CancellationToken);
 
-            var service = new MediaService(dbContext, metadataService.Object, logger.Object);
+            var service = new MediaService(dbContext, metadataService.Object, downloadQueue.Object, logger.Object);
 
             var request = new PagedRequest
             {
@@ -184,7 +186,7 @@ namespace MediaArchive.Tests.Services
 
             await dbContext.SaveChangesAsync(TestContext.Current.CancellationToken);
 
-            var service = new MediaService(dbContext, metadataService.Object, logger.Object);
+            var service = new MediaService(dbContext, metadataService.Object, downloadQueue.Object, logger.Object);
 
             // Act
             var result = await service.GetAllAsync(userA, new PagedRequest());
@@ -237,7 +239,7 @@ namespace MediaArchive.Tests.Services
 
             await dbContext.SaveChangesAsync(TestContext.Current.CancellationToken);
 
-            var service = new MediaService(dbContext, metadataService.Object, logger.Object);
+            var service = new MediaService(dbContext, metadataService.Object, downloadQueue.Object, logger.Object);
 
             // Act
             var result = await service.GetAllAsync(userId,
@@ -259,7 +261,7 @@ namespace MediaArchive.Tests.Services
 
             var dbContext = CreateDbContext();
 
-            var service = new MediaService(dbContext, metadataService.Object, logger.Object);
+            var service = new MediaService(dbContext, metadataService.Object, downloadQueue.Object, logger.Object);
 
             // Act
             var result = await service.GetAllAsync(userId, new PagedRequest());
@@ -267,6 +269,87 @@ namespace MediaArchive.Tests.Services
             // Assert
             result.Items.Should().BeEmpty();
             result.TotalCount.Should().Be(0);
+        }
+
+        [Fact]
+        public async Task RequestDownloadAsync_ShouldSetStatusToQueuedAndEnqueueDownload_WhenMediaBelongsToUser()
+        {
+            // Arrange
+            var userId = Guid.NewGuid();
+            var mediaId = Guid.NewGuid();
+
+            var downloadQueueMock = new Mock<IDownloadQueue>();
+
+            var dbContext = CreateDbContext();
+
+            dbContext.MediaItems.Add(
+                new MediaItem
+                {
+                    Id = mediaId,
+                    UserId = userId,
+                    Title = "Wildfire",
+                    Platform = "youtube",
+                    SourceUrl = "url1",
+                    Status = DownloadStatus.Pending,
+                    CreatedAt = DateTime.UtcNow
+                });
+
+
+            await dbContext.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+            var service = new MediaService(dbContext, metadataService.Object, downloadQueueMock.Object, logger.Object);
+
+            // Act
+            await service.RequestDownloadAsync(userId, mediaId);
+
+            // Assert
+            var media = await dbContext.MediaItems.FirstAsync(x => x.Id == mediaId, TestContext.Current.CancellationToken);
+
+            media.Status.Should().Be(DownloadStatus.Queued);
+
+            downloadQueueMock.Verify(x => x.QueueDownload(mediaId), Times.Once());
+        }
+
+        [Fact]
+        public async Task RequestDownloadAsync_ShouldThrowNotFoundAndNotEnqueueDownload_WhenMediaBelongsToAnotherUser()
+        {
+            // Arrange
+            var ownerUserId = Guid.NewGuid();
+            var requestingUserId = Guid.NewGuid();
+            var mediaId = Guid.NewGuid();
+
+            var downloadQueueMock = new Mock<IDownloadQueue>();
+
+            var dbContext = CreateDbContext();
+
+            dbContext.MediaItems.Add(
+                new MediaItem
+                {
+                    Id = mediaId,
+                    UserId = ownerUserId,
+                    Title = "Wildfire",
+                    Platform = "youtube",
+                    SourceUrl = "url1",
+                    Status = DownloadStatus.Pending,
+                    CreatedAt = DateTime.UtcNow
+                });
+
+
+            await dbContext.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+            var service = new MediaService(dbContext, metadataService.Object, downloadQueueMock.Object, logger.Object);
+
+            // Act
+            Func<Task> act = async () => await service.RequestDownloadAsync(requestingUserId, mediaId);
+
+            // Assert
+            await act.Should().ThrowAsync<NotFoundException>();
+
+            var media = await dbContext.MediaItems.FirstAsync(x => x.Id == mediaId, TestContext.Current.CancellationToken);
+
+            media.Status.Should().Be(DownloadStatus.Pending);
+
+            downloadQueueMock.Verify(x => x.QueueDownload(It.IsAny<Guid>()), Times.Never());
         }
     }
 }
