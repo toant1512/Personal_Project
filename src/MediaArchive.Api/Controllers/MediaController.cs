@@ -39,14 +39,19 @@ public class MediaController : ControllerBase
     [HttpGet]
     public async Task<IActionResult> GetAll([FromQuery] PagedRequest request)
     {
-        if (request.Page <= 0)
+        if (request.Page <= 1)
         {
-            throw new BadRequestException("Page must be greater than 0");
+            throw new BadRequestException("Page must be greater than 1");
         }
 
-        if (request.PageSize <= 0)
+        if (request.PageSize < 1 || request.PageSize > 50)
         {
-            throw new BadRequestException("PageSize must be greater than 0");
+            return BadRequest("Page size must be between 1 and 50.");
+        }
+
+        if (!string.IsNullOrWhiteSpace(request.Search) && request.Search.Length > 100)
+        {
+            return BadRequest("Search must not exceed 100 characters.");
         }
 
         var userId = GetUserId();

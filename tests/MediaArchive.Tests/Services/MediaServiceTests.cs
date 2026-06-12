@@ -1,4 +1,5 @@
 ﻿using FluentAssertions;
+using MediaArchive.Application.Authentication.DTOs;
 using MediaArchive.Application.Common.Models;
 using MediaArchive.Application.Exceptions;
 using MediaArchive.Application.Interfaces;
@@ -10,6 +11,7 @@ using MediaArchive.Infrastructure.Services;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Moq;
+using System.ComponentModel.DataAnnotations;
 using static Microsoft.ApplicationInsights.MetricDimensionNames.TelemetryContext;
 
 namespace MediaArchive.Tests.Services
@@ -27,6 +29,20 @@ namespace MediaArchive.Tests.Services
                     .Options;
 
             return new ApplicationDbContext(options);
+        }
+
+        private static IList<ValidationResult> ValidateModel(object model)
+        {
+            var validationResults = new List<ValidationResult>();
+            var validationContext = new ValidationContext(model);
+
+            Validator.TryValidateObject(
+                model,
+                validationContext,
+                validationResults,
+                validateAllProperties: true);
+
+            return validationResults;
         }
 
         [Fact]
@@ -350,6 +366,215 @@ namespace MediaArchive.Tests.Services
             media.Status.Should().Be(DownloadStatus.Pending);
 
             downloadQueueMock.Verify(x => x.QueueDownload(It.IsAny<Guid>()), Times.Never());
+        }
+
+        [Fact]
+        public void RegisterRequest_ShouldBeInvalid_WhenEmailIsInvalid()
+        {
+            // Arrange
+            var request = new RegisterRequest
+            {
+                Email = "not-an-email",
+                Password = "password123"
+            };
+
+            // Act
+            var validationResults = ValidateModel(request);
+
+            // Assert
+            validationResults.Should().Contain(x =>
+                x.MemberNames.Contains(nameof(RegisterRequest.Email)));
+        }
+
+        [Fact]
+        public void RegisterRequest_ShouldBeInvalid_WhenPasswordIsTooShort()
+        {
+            // Arrange
+            var request = new RegisterRequest
+            {
+                Email = "test@example.com",
+                Password = "123"
+            };
+
+            // Act
+            var validationResults = ValidateModel(request);
+
+            // Assert
+            validationResults.Should().Contain(x =>
+                x.MemberNames.Contains(nameof(RegisterRequest.Password)));
+        }
+
+        [Fact]
+        public void CreateMediaRequest_ShouldBeInvalid_WhenSourceUrlIsInvalid()
+        {
+            // Arrange
+            var request = new CreateMediaRequest
+            {
+                SourceUrl = "not-a-url"
+            };
+
+            // Act
+            var validationResults = ValidateModel(request);
+
+            // Assert
+            validationResults.Should().Contain(x =>
+                x.MemberNames.Contains(nameof(CreateMediaRequest.SourceUrl)));
+        }
+
+        [Fact]
+        public void CreateMediaRequest_ShouldBeValid_WhenSourceUrlIsValid()
+        {
+            // Arrange
+            var request = new CreateMediaRequest
+            {
+                SourceUrl = "https://www.youtube.com/watch?v=test"
+            };
+
+            // Act
+            var validationResults = ValidateModel(request);
+
+            // Assert
+            validationResults.Should().BeEmpty();
+        }
+
+        [Fact]
+        public void RegisterRequest_ShouldBeInvalid_WhenUsernameIsEmpty()
+        {
+            // Arrange
+            var request = new RegisterRequest
+            {
+                Email = "test@example.com",
+                Password = "password123"
+            };
+
+            // Act
+            var validationResults = ValidateModel(request);
+
+            // Assert
+            validationResults.Should().Contain(x =>
+                x.MemberNames.Contains(nameof(RegisterRequest.Username)));
+        }
+
+        [Fact]
+        public void PagedRequest_ShouldBeInvalid_WhenPageIsLessThanOne()
+        {
+            // Arrange
+            var request = new PagedRequest
+            {
+                Page = 0,
+                PageSize = 10
+            };
+
+            // Act
+            var validationResults = ValidateModel(request);
+
+            // Assert
+            validationResults.Should().Contain(x =>
+                x.MemberNames.Contains(nameof(PagedRequest.Page)));
+        }
+
+        [Fact]
+        public void PagedRequest_ShouldBeInvalid_WhenPageSizeIsGreaterThanFifty()
+        {
+            // Arrange
+            var request = new PagedRequest
+            {
+                Page = 1,
+                PageSize = 100
+            };
+
+            // Act
+            var validationResults = ValidateModel(request);
+
+            // Assert
+            validationResults.Should().Contain(x =>
+                x.MemberNames.Contains(nameof(PagedRequest.PageSize)));
+        }
+
+        [Fact]
+        public void PagedRequest_ShouldBeInvalid_WhenSearchExceedsMaxLength()
+        {
+            // Arrange
+            var request = new PagedRequest
+            {
+                Page = 1,
+                PageSize = 10,
+                Search = new string('a', 101)
+            };
+
+            // Act
+            var validationResults = ValidateModel(request);
+
+            // Assert
+            validationResults.Should().Contain(x =>
+                x.MemberNames.Contains(nameof(PagedRequest.Search)));
+        }
+
+        [Fact]
+        public void PagedRequest_ShouldBeValid_WhenInputIsValid()
+        {
+            // Arrange
+            var request = new PagedRequest
+            {
+                Page = 1,
+                PageSize = 10,
+                Search = "youtube"
+            };
+
+            // Act
+            var validationResults = ValidateModel(request);
+
+            // Assert
+            validationResults.Should().BeEmpty();
+        }
+
+        [Fact]
+        public void PagedRequest_ShouldBeInvalid_WhenPageIsZero()
+        {
+            // Arrange
+            var request = new PagedRequest
+            {
+                Page = 0,
+                PageSize = 10
+            };
+
+            // Act
+            var validationResults = ValidateModel(request);
+
+            // Assert
+            validationResults.Should().Contain(x =>
+                x.MemberNames.Contains(nameof(PagedRequest.Page)));
+        }
+
+        [Fact]
+        public void PagedRequest_ShouldBeInvalid_WhenPageSizeIsZero()
+        {
+            // Arrange
+            var request = new PagedRequest
+            {
+                Page = 1,
+                PageSize = 0
+            };
+
+            // Act
+            var validationResults = ValidateModel(request);
+
+            // Assert
+            validationResults.Should().Contain(x =>
+                x.MemberNames.Contains(nameof(PagedRequest.PageSize)));
+        }
+
+        [Fact]
+        public void PagedRequest_ShouldBeValid_WhenUsingDefaultValues()
+        {
+            // Arrange
+            var request = new PagedRequest();
+
+            // Act
+            var validationResults = ValidateModel(request);
+
+            // Assert
+            validationResults.Should().BeEmpty();
         }
     }
 }
