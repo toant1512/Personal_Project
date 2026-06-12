@@ -12,7 +12,7 @@ public interface IMediaService
 
     Task DeleteAsync(Guid mediaId, Guid userId);
 
-    Task QueueDownloadAsync(Guid mediaId);
+    Task RequestDownloadAsync(Guid userId, Guid mediaId);
 
     Task<MediaResponse> GetByIdAsync(Guid mediaId, Guid userId);
 

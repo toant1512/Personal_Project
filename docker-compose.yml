@@ -2,13 +2,13 @@ services:
 
   postgres:
     image: postgres:17
-    container_name: mediaarchive-postgres
+    container_name: postgres
 
     environment:
-      POSTGRES_DB: MediaArchiveDb
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
-
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    
     ports:
       - "5432:5432"
 
@@ -27,12 +27,8 @@ services:
 
     environment:
       ASPNETCORE_ENVIRONMENT: Development
-
-      ConnectionStrings__DefaultConnection: Host=postgres;Port=5432;Database=MediaArchiveDb;Username=postgres;Password=postgres
-
-      Jwt__Key: 76145d309057e638a46277f4693bb4c8170501db7040bc179672534065969ac2
-      Jwt__Issuer: MediaArchive
-      Jwt__Audience: MediaArchiveUsers
+      ConnectionStrings__DefaultConnection: "Host=${DB_HOST};Port=${DB_PORT};Database=${DB_NAME};Username=${DB_USER};Password=${DB_PASSWORD}"
+      Jwt__Key: "${JWT_KEY}"
 
     ports:
       - "5000:8080"

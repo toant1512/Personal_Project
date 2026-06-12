@@ -14,11 +14,19 @@ public class MediaService : IMediaService
 {
     private readonly ApplicationDbContext _context;
     private readonly IMediaMetadataService _metadataService;
+    private readonly IDownloadQueue _downloadQueue;
     private readonly ILogger<MediaService> _logger;
-    public MediaService(ApplicationDbContext context, IMediaMetadataService metadataService, ILogger<MediaService> logger)
+
+    public MediaService(
+        ApplicationDbContext context, 
+        IMediaMetadataService metadataService, 
+        IDownloadQueue downloadQueue, 
+        ILogger<MediaService> logger
+        )
     {
         _context = context;
         _metadataService = metadataService;
+        _downloadQueue = downloadQueue;
         _logger = logger;
     }
 
@@ -113,19 +121,21 @@ public class MediaService : IMediaService
         await _context.SaveChangesAsync();
     }
 
-    public async Task QueueDownloadAsync(Guid mediaId)
+    public async Task RequestDownloadAsync(Guid userId, Guid mediaId)
     {
         var media = await _context.MediaItems
-            .FirstOrDefaultAsync(x => x.Id == mediaId);
+            .FirstOrDefaultAsync(x => x.Id == mediaId && x.UserId == userId);
 
         if (media == null)
         {
-            throw new NotFoundException("Media not found");
+            throw new NotFoundException("Media not found in your media items!");
         }
 
         media.Status = DownloadStatus.Queued;
 
         await _context.SaveChangesAsync();
+
+        _downloadQueue.QueueDownload(mediaId);
     }
 
     public async Task<MediaResponse> GetByIdAsync(Guid mediaId, Guid userId)
@@ -147,6 +157,8 @@ public class MediaService : IMediaService
             FilePath = media.FilePath,
             ThumbnailUrl = media.ThumbnailUrl,
             DurationSeconds = media.DurationSeconds,
+            Uploader = media.Uploader,
+            ChannelName = media.ChannelName,
             CreatedAt = media.CreatedAt,
             Status = media.Status.ToString()
         };
